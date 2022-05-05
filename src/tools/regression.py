@@ -61,9 +61,39 @@ def single_regression(df):
         st.plotly_chart(fig, use_container_width=True, config=config.go_config)
 
 
+def correlation(df):
 
+    line1_spacer1, line1_1, line1_2, line1_spacer2 = st.columns((.1, 1.0, 2.2, .1))
+
+    dataset = df.copy()
+
+    with line1_1:
+        st.write("")
+        threshold = st.slider("相関係数 閾値", 0.0, 1.0)
+
+
+    dataset_corr = dataset.corr()
+    if threshold > 0:
+        plot_data = dataset_corr.where(((dataset_corr > threshold) | (dataset_corr < -threshold)), 0)
+    else:
+        plot_data = dataset_corr
+
+
+    with line1_2:
+
+        fig = px.imshow(
+            plot_data,
+            color_continuous_scale=px.colors.diverging.Picnic,
+            zmin=-1,
+            zmax=1
+        )
+
+        st.plotly_chart(fig, use_container_width=True, config=config.go_config)
 
 def run(df):
     
     st.markdown("#### 回帰分析")
     single_regression(df)
+
+    st.markdown("#### 相関分析")
+    correlation(df)

@@ -7,7 +7,7 @@ import openpyxl
 st.set_page_config(layout="wide")
 
 selected_tool = st.selectbox("tools", (
-    '自動分析', 'aaa'
+    '自動分析', 'Viewer'
 ));
 
 data_file = st.file_uploader("Upload Data File")
@@ -22,8 +22,6 @@ if data_file != None:
         sheetname_list
     )
 
-
-
     if (sheetname != ""):
         df = pd.read_excel(data_file, sheet_name=sheetname, index_col=0)
         
@@ -37,6 +35,10 @@ if data_file != None:
         if selected_tool in ('自動分析'):
             from tools import regression
             regression.run(df)
+
+        if selected_tool in ('Viewer'):
+            from tools import viewer
+            viewer.run(df)
 
 else:
     st.info("Please Upload CSV File")

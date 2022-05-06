@@ -1,6 +1,7 @@
 import streamlit as st
 
 import numpy as np
+import pandas as pd
 
 from sklearn.linear_model import LinearRegression
 
@@ -60,14 +61,61 @@ def single_regression(df):
 
         st.plotly_chart(fig, use_container_width=True, config=config.go_config)
 
-
-def correlation(df):
+def multiple_regression(df):
 
     line1_spacer1, line1_1, line1_2, line1_spacer2 = st.columns((.1, 1.0, 2.2, .1))
 
     dataset = df.copy()
 
+    attribute_list = []
+    for name, dtype in zip(dataset.dtypes.index, dataset.dtypes):
+        if dtype in config.ACCEPT_DTYPE:
+            attribute_list.append(name)
+
     with line1_1:
+        x_attribute = st.multiselect(
+            "説明変数",
+            attribute_list,
+            key="multi_reg_attr_x"
+        );
+
+        y_attribute = st.selectbox(
+            "目的変数",
+            attribute_list,
+            key="multi_reg_attr_y"
+        )
+    
+    if len(x_attribute) > 0:
+        dataset = dataset.dropna(subset=[y_attribute].extend(x_attribute))
+        X = dataset[x_attribute].apply(lambda x: (x - np.mean(x)) / (np.max(x) - np.min(x))).values
+        Y = dataset[y_attribute]
+        Y = ((Y - Y.mean()) / (Y.max() - Y.min())).values.reshape(-1)
+
+        model = LinearRegression()
+        model.fit(X, Y)
+
+        with line1_2:
+            st.table(
+                pd.DataFrame(model.coef_, index=x_attribute, columns=[y_attribute])
+                .sort_values(y_attribute, ascending=False)
+            )
+
+    else: 
+        st.info("Select X Attribute")
+
+
+def correlation(df):
+
+    line1_spacer1, line1_1, line1_2, line1_spacer2 = st.columns((.1, 0.6, 2.6, .1))
+
+    dataset = df.copy()
+
+    with line1_1:
+        st.caption("【一般論での相関係数の目安】")
+        st.caption("x < 0.2 : 相関がない")
+        st.caption("0.2 < x < 0.4 : 弱い相関")
+        st.caption("0.4 < x < 0.7 : 通常の相関")
+        st.caption("0.7 < x < 1.0 : 強い相関")
         st.write("")
         threshold = st.slider("相関係数 閾値", 0.0, 1.0)
 
@@ -94,6 +142,8 @@ def run(df):
     
     st.markdown("#### 回帰分析")
     single_regression(df)
+    st.markdown("##### 多重回帰")
+    multiple_regression(df)
 
     st.markdown("#### 相関分析")
     correlation(df)
